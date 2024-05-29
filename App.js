@@ -1,47 +1,47 @@
+import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Button from "./components/Button.js"
+import Button from "./components/Button.js";
+import Row from "./components/Row.js";
+import DisplayContainer from "./components/DisplayContainer.js";
 
 export default function App() {
+  const [displayValue, setDisplayValue] = useState("");
+  const [previousInput, setPreviousInput] = useState("")
+  
+  const handlePress = (value) => {
+    setDisplayValue((previous) => {
+      const isPreviousEmpty = previousInput === "";
+      const isDifferentType = isNaN(previousInput) !== isNaN(value);
+      const isCurrentNumber = !isNaN(value);
+
+      allowed = (isPreviousEmpty && isCurrentNumber) || (isDifferentType && !isPreviousEmpty);
+
+      if (allowed) {
+        setPreviousInput(value);
+        return previous === "" ? String(value) : previous + value;
+      }
+      return previous;
+    });
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.innerContainer}>
-        <Button>Test</Button>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>EXPRESSION BUILDING</Text>
-        </View>
-        <View style={styles.descriptionContainer}>
-          <Text style={styles.description}>
-            In this game, you will create an expression that gives the target
-            value.
-          </Text>
-        </View>
-        <View>
-          <View style={styles.displayValue}>
-            <View style={styles.independentValueContainer}>
-              <Text>YOUR VALUE</Text>
-              <View style={styles.valueContainer}>
-                <Text style={styles.valueText}>0</Text>
-              </View>
-            </View>
-            <View style={styles.independentValueContainer}>
-              <Text>TARGET VALUE</Text>
-              <View style={styles.valueContainer}>
-                <Text style={styles.valueText}>0</Text>
-              </View>
-            </View>
-            <View style={styles.independentValueContainer}>
-              <Text>TIMES</Text>
-              <View style={styles.valueContainer}>
-                <Text style={styles.valueText}>0</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputText}>USER INPUT HERE</Text>
-        </View>
-
-      </View>
+      <DisplayContainer>{displayValue}</DisplayContainer>
+      <Row>
+        {['7', '82', '+', '-'].map((item) => (
+          <Button key={item} onPress={handlePress} type={isNaN(item) ? 'operator' : 'integer'}>{item}</Button>
+        ))}
+      </Row>
+      <Row>
+        {['4', '5', '×', '/'].map((item) => (
+        <Button key={item} onPress={handlePress} type={isNaN(item) ? 'operator' : 'integer'}>{item}</Button>
+        ))}
+      </Row>
+      <Row>
+        {['7', '82', '2', '1'].map((item) => (
+          <Button key={item} onPress={handlePress} type={isNaN(item) ? 'operator' : 'integer'}>{item}</Button>
+        ))}
+      </Row>
     </View>
   );
 }
@@ -52,26 +52,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 2,
-    backgroundColor: "#F4F1F1",
+    backgroundColor: "#EEEEEE",
   },
-  innerContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "90%",
-    height: "80%",
-    backgroundColor: "white",
-    borderRadius: 5,
-    // iOS
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    // Android
-    elevation: 10,
-  },
+
   titleContainer: {
     paddingTop: 20,
     paddingBottom: 20,
