@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { StyleSheet, View} from "react-native";
+import { StyleSheet, View, Text} from "react-native";
 import InputButton from "./components/Button/InputButton.js";
 import Row from "./components/Row.js";
 import DisplayContainer from "./components/DisplayContainer.js";
@@ -8,15 +8,72 @@ import FeedbackContainer from "./components/FeedbackContainer.js";
 import NotifyModal from "./components/NotifyModal.js";
 
 export default function App() {
-  const [displayValue, setDisplayValue] = useState("");
   const [yourValue, setYourValue] = useState("");
   const [targetValue, setTargetValue] = useState(9)
+  const [trial, setTrial] = useState(3);
+  const [displayValue, setDisplayValue] = useState("");
+  const [availableNumber, setAvailableNumber] = useState([]);
+  const [solution, setSolution] = useState("");
+
+  //Handle disabling option(s)
   const [previousInput, setPreviousInput] = useState("");
   const [usedNumber, setUsedNumber] = useState([]);
-  const [trial, setTrial] = useState(3);
+
+  //Handle notification
   const [notifyVisible, setNotifyVisible] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
-  const [notifyButtonStatus, setNotifyButtonStatus] = useState("")
+  const [notifyButtonStatus, setNotifyButtonStatus] = useState("");
+
+  const generateAvailableNumber = () => {
+    const array = [];
+    const generatedNumbers = new Set();
+    while (array.length < 4) {
+      const randomInteger = Math.floor(Math.random() * 99) + 1;
+      if (!generatedNumbers.has(randomInteger)) {
+        generatedNumbers.add(randomInteger);
+        array.push(randomInteger);
+      }
+    }
+    setAvailableNumber(array);
+  };
+
+  const generateRandomOperator = () => {
+    const operators = ['+', '-', '*', '/'];
+    return operators[Math.floor(Math.random() * operators.length)];
+  };
+
+  const generateTargetValue = () => {
+    if (availableNumber.length < 4) return;
+    let result;
+    let expression;
+    do {
+      expression = `${availableNumber[0]} ${generateRandomOperator()} ${availableNumber[1]} ${generateRandomOperator()} ${availableNumber[2]} ${generateRandomOperator()} ${availableNumber[3]}`;
+      try {
+        result = eval(expression);
+      } catch (error) {
+        console.error("Failed to generate target value from expression:", expression);
+        result = null;
+      }
+    } while (result === null || result < 1 || result > 999 || !Number.isInteger(result));
+
+    if (!Number.isInteger(result)) {
+      generateAvailableNumber(); // Regenerate available numbers and target value
+    } else {
+      console.log("Generated expression: " + expression);
+      console.log("Target value: " + result);
+      setTargetValue(result);
+      setSolution(expression);
+    }
+  };
+
+  useEffect(() => {
+    generateTargetValue();
+  }, [availableNumber]);
+
+  // initial run everytime app start
+  useEffect(() => {
+    generateAvailableNumber();
+  }, []);
 
   const handlePress = (value) => {
     setDisplayValue((previous) => {
@@ -41,28 +98,19 @@ export default function App() {
     setUsedNumber([]);
   };
 
-  useEffect(() => {
-    if (yourValue !== "") {
-      console.log("Current result is now: " + yourValue);
-      console.log("Target value is: " + targetValue);
-
-      if (targetValue === yourValue) {
-        setNotifyMessage("Congrattulation!\nYou won the game. Tap the button to start a new game.");
-        setNotifyButtonStatus("New Game");
-      } else {
-        setTrial((prevTrial) => prevTrial - 1);
-        setNotifyMessage("Your expression is incorrect!\nTap the button to try again.");
-        setNotifyButtonStatus("Reset");
-      }
-      setNotifyVisible(true);
-    }
-  }, [yourValue, targetValue]);
+  const handleNewGame = () => {
+    setTrial(3);
+    setDisplayValue("");
+    setPreviousInput("");
+    setUsedNumber([]);
+    setYourValue("");
+    generateAvailableNumber();
+  }
 
   const handleCheck = (expression) => {
     try {
       const result = eval(expression);
       setYourValue(result);
-      return result;
     } catch (error) {
       setNotifyMessage("INVALID EXPRESSION");
       setNotifyButtonStatus("RE-TRY");
@@ -70,15 +118,41 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    if (trial === 0) {
+      setNotifyMessage("Unfortunately\nYou have run out of trials. Tap the button to start a new game.");
+      setNotifyButtonStatus("New Game");
+      setNotifyVisible(true);
+    } 
+  }, [trial])
+
+  useEffect(() => {
+    if (yourValue !== "") {
+      if (targetValue === yourValue) {
+        setNotifyMessage("Congratulations!\nYou won the game. Tap the button to start a new game.");
+        setNotifyButtonStatus("New Game");
+        setNotifyVisible(true);
+      } else {
+        setTrial((previousTrial) => previousTrial - 1);
+        setNotifyMessage("Your expression is incorrect!\nTap the button to try again.");
+        setNotifyButtonStatus("Reset");
+        setNotifyVisible(true);
+      }
+    }
+  }, [yourValue]);
+
   const closeModal = () => {
     setNotifyVisible(false);
     if (notifyButtonStatus === "Reset") {
       handleReset();
+    } else if (notifyButtonStatus === "New Game") {
+      handleNewGame();
     }
   };
 
   return (
     <View style={styles.container}>
+
       <Row>
         <FeedbackContainer value={yourValue}>YOUR VALUE</FeedbackContainer>
         <FeedbackContainer value={targetValue}>TARGET VALUE</FeedbackContainer>
@@ -88,25 +162,35 @@ export default function App() {
         <DisplayContainer>{displayValue}</DisplayContainer>
       </Row>
       <Row>
-        {['24', '34', '+', '-'].map((item) => (
+        {availableNumber.slice(0, 2).map((item) => (
           <InputButton
             key={item}
             onPress={() => handlePress(item)}
-            type={isNaN(item) ? 'operator' : 'number'}
-            disabled={!isNaN(item) ? usedNumber.includes(item) : null}
+            type="number"
+            disabled={usedNumber.includes(item)}
           >
+            {String(item)}
+          </InputButton>
+        ))}
+        {["+", "-"].map((item) => (
+          <InputButton key={item} onPress={() => handlePress(item)} type="operator">
             {item}
           </InputButton>
         ))}
       </Row>
       <Row>
-        {['4', '5', '*', '/'].map((item) => (
+        {availableNumber.slice(2, 4).map((item) => (
           <InputButton
             key={item}
             onPress={() => handlePress(item)}
-            type={isNaN(item) ? 'operator' : 'number'}
-            disabled={!isNaN(item) ? usedNumber.includes(item) : null}
+            type="number"
+            disabled={usedNumber.includes(item)}
           >
+            {String(item)}
+          </InputButton>
+        ))}
+        {["*", "/"].map((item) => (
+          <InputButton key={item} onPress={() => handlePress(item)} type="operator">
             {item}
           </InputButton>
         ))}
@@ -122,6 +206,11 @@ export default function App() {
       >
         {notifyMessage}
       </NotifyModal>
+      <View>
+        <Text>
+          {solution}
+        </Text>
+      </View>  
     </View>
   );
 }

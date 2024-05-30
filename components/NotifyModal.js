@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     color: "white",
-    fontWeight: "800",
+    fontWeight: "600",
     fontSize: 20,
   },
 });
