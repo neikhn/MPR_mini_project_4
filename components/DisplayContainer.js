@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { View, Text, StyleSheet } from "react-native";
 
 export default function DisplayContainer({ children }) {
@@ -8,9 +9,14 @@ export default function DisplayContainer({ children }) {
   )
 }
 
+DisplayContainer.propTypes= {
+  children: PropTypes.string.isRequired,
+}
+
 const styles = StyleSheet.create({
   displayContainer: {
-    width: "90%",
+    flex: 1,
+    margin: 10,
     height: 70,
     justifyContent: "center",
     alignItems: "flex-end",

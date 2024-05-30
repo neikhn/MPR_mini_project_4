@@ -8,6 +8,8 @@
 
   const styles = StyleSheet.create({
     container: {
-      flexDirection: "row"
+      flexDirection: 'row', // Makes each row display containers horizontally
+      alignItems: 'center', // Aligns content vertically within containers
+      justifyContent: "space-between",
     }
   });

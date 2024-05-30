@@ -1,26 +1,19 @@
-import { useState } from "react";
 import PropTypes from "prop-types";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 
-export default function Button({ children, onPress, type }) {
-  const [disabled, setDisabled] = useState(false);
-
-  const handlePress = () => {
-    if (type === "integer") {
-      setDisabled(true);
-    }
-    onPress(children)
-  };
+export default function InputButton({ children, onPress, type, disabled }) {
+  const isNumber = (type === "number");
 
   return (
     <View style={styles.outerContainer}>
       <Pressable
         style={({ pressed }) => [
-          styles.innerContainer,
+          isNumber ? styles.primaryContainer : styles.secondaryContainer,
+          pressed ? (isNumber ? styles.primaryFeedbackFlash : styles.secondaryFeedbackFlash) : null,
           pressed && !disabled ? styles.feedbackFlash : null, //feedbackFlash only when button is not disabled
           disabled ? styles.disabledContainer : null
         ]}
-        onPress={handlePress}
+        onPress={onPress}
         disabled={disabled}
       >
         <Text style={styles.buttonText}>{children}</Text>
@@ -29,21 +22,28 @@ export default function Button({ children, onPress, type }) {
   );
 }
 
-Button.propTypes = {
-  children: PropTypes.node.isRequired, 
+InputButton.propTypes = {
+  children: PropTypes.string.isRequired,
   onPress: PropTypes.func.isRequired, 
-  type: PropTypes.oneOf(['integer', 'operator']).isRequired, 
+  type: PropTypes.oneOf(['number', 'operator']).isRequired, 
 };
 
 const styles = StyleSheet.create({
   outerContainer: {
     margin: 10
   },
-  innerContainer: {
+  primaryContainer: {
     width: 70,
     aspectRatio: 1,
     justifyContent: "center",
     backgroundColor: "#FC5E5E",
+    borderRadius: 20
+  },
+  secondaryContainer: {
+    width: 70,
+    aspectRatio: 1,
+    justifyContent: "center",
+    backgroundColor: "#5E6EFC",
     borderRadius: 20
   },
   disabledContainer: {
@@ -55,7 +55,10 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center"
   },
-  feedbackFlash: {
+  primaryFeedbackFlash: {
     backgroundColor: "#C73659"
+  },
+  secondaryFeedbackFlash: {
+    backgroundColor: "#3E4ABB"
   }
 });

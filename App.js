@@ -1,13 +1,23 @@
-import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import Button from "./components/Button.js";
+import { useState, useEffect } from "react";
+import { StyleSheet, View} from "react-native";
+import InputButton from "./components/Button/InputButton.js";
 import Row from "./components/Row.js";
 import DisplayContainer from "./components/DisplayContainer.js";
+import HelperButton from "./components/Button/HelperButton.js";
+import FeedbackContainer from "./components/FeedbackContainer.js";
+import NotifyModal from "./components/NotifyModal.js";
 
 export default function App() {
   const [displayValue, setDisplayValue] = useState("");
-  const [previousInput, setPreviousInput] = useState("")
-  
+  const [yourValue, setYourValue] = useState("");
+  const [targetValue, setTargetValue] = useState(9)
+  const [previousInput, setPreviousInput] = useState("");
+  const [usedNumber, setUsedNumber] = useState([]);
+  const [trial, setTrial] = useState(3);
+  const [notifyVisible, setNotifyVisible] = useState(false);
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyButtonStatus, setNotifyButtonStatus] = useState("")
+
   const handlePress = (value) => {
     setDisplayValue((previous) => {
       const isPreviousEmpty = previousInput === "";
@@ -18,30 +28,100 @@ export default function App() {
 
       if (allowed) {
         setPreviousInput(value);
+        setUsedNumber([...usedNumber, value]);
         return previous === "" ? String(value) : previous + value;
       }
       return previous;
     });
   };
 
+  const handleReset = () => {
+    setDisplayValue("");
+    setPreviousInput("");
+    setUsedNumber([]);
+  };
+
+  useEffect(() => {
+    if (yourValue !== "") {
+      console.log("Current result is now: " + yourValue);
+      console.log("Target value is: " + targetValue);
+
+      if (targetValue === yourValue) {
+        setNotifyMessage("Congrattulation!\nYou won the game. Tap the button to start a new game.");
+        setNotifyButtonStatus("New Game");
+      } else {
+        setTrial((prevTrial) => prevTrial - 1);
+        setNotifyMessage("Your expression is incorrect!\nTap the button to try again.");
+        setNotifyButtonStatus("Reset");
+      }
+      setNotifyVisible(true);
+    }
+  }, [yourValue, targetValue]);
+
+  const handleCheck = (expression) => {
+    try {
+      const result = eval(expression);
+      setYourValue(result);
+      return result;
+    } catch (error) {
+      setNotifyMessage("INVALID EXPRESSION");
+      setNotifyButtonStatus("RE-TRY");
+      setNotifyVisible(true);
+    }
+  };
+
+  const closeModal = () => {
+    setNotifyVisible(false);
+    if (notifyButtonStatus === "Reset") {
+      handleReset();
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <DisplayContainer>{displayValue}</DisplayContainer>
       <Row>
-        {['7', '82', '+', '-'].map((item) => (
-          <Button key={item} onPress={handlePress} type={isNaN(item) ? 'operator' : 'integer'}>{item}</Button>
+        <FeedbackContainer value={yourValue}>YOUR VALUE</FeedbackContainer>
+        <FeedbackContainer value={targetValue}>TARGET VALUE</FeedbackContainer>
+        <FeedbackContainer value={trial}>TRIALS</FeedbackContainer>
+      </Row>
+      <Row>
+        <DisplayContainer>{displayValue}</DisplayContainer>
+      </Row>
+      <Row>
+        {['24', '34', '+', '-'].map((item) => (
+          <InputButton
+            key={item}
+            onPress={() => handlePress(item)}
+            type={isNaN(item) ? 'operator' : 'number'}
+            disabled={!isNaN(item) ? usedNumber.includes(item) : null}
+          >
+            {item}
+          </InputButton>
         ))}
       </Row>
       <Row>
-        {['4', '5', '×', '/'].map((item) => (
-        <Button key={item} onPress={handlePress} type={isNaN(item) ? 'operator' : 'integer'}>{item}</Button>
+        {['4', '5', '*', '/'].map((item) => (
+          <InputButton
+            key={item}
+            onPress={() => handlePress(item)}
+            type={isNaN(item) ? 'operator' : 'number'}
+            disabled={!isNaN(item) ? usedNumber.includes(item) : null}
+          >
+            {item}
+          </InputButton>
         ))}
       </Row>
       <Row>
-        {['7', '82', '2', '1'].map((item) => (
-          <Button key={item} onPress={handlePress} type={isNaN(item) ? 'operator' : 'integer'}>{item}</Button>
-        ))}
+        <HelperButton onPress={handleReset}>Reset</HelperButton>
+        <HelperButton onPress={() => handleCheck(displayValue)}>Check</HelperButton>
       </Row>
+      <NotifyModal
+        visible={notifyVisible}
+        buttonContent={notifyButtonStatus}
+        onClose={closeModal}
+      >
+        {notifyMessage}
+      </NotifyModal>
     </View>
   );
 }
@@ -51,72 +131,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 2,
-    backgroundColor: "#EEEEEE",
-  },
-
-  titleContainer: {
-    paddingTop: 20,
-    paddingBottom: 20,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-  descriptionContainer: {
-    padding: 20,
-  },
-  description: {
-    fontSize: 15,
-    textAlign: "center",
-    fontWeight: "400",
-  },
-  displayValue: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  independentValueContainer: {
-    padding: 20,
-  },
-  valueContainer: {
-    marginTop: 5,
-    padding: 5,
-    backgroundColor: "#F4F1F1",
-    borderRadius: 5,
-  },
-  valueText: {
-    color: "black",
-    textAlign: "center",
-  },
-  inputContainer: {
-    width: "70%",
-    backgroundColor: "#F4F1F1",
-    borderRadius: 5,
-    margin: 10,
     padding: 10,
-  },
-  inputText: {
-    color: "black",
-    textAlign: "right",
-  },
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    width: "70%",
-    margin: 20,
-  },
-  gridItem: {
-    width: "21%",
-    height: "25%",
-    backgroundColor: "#F6A747",
-    marginBottom: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 5,
-  },
-  gridText: {
-    color: "white",
+    backgroundColor: "#EEEEEE",
   },
 });
