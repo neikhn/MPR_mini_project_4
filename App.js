@@ -29,6 +29,7 @@ export default function App() {
     const generatedNumbers = new Set();
     while (array.length < 4) {
       const randomInteger = Math.floor(Math.random() * 99) + 1;
+      // Check if the random integer has not been generated before
       if (!generatedNumbers.has(randomInteger)) {
         generatedNumbers.add(randomInteger);
         array.push(randomInteger);
@@ -57,7 +58,8 @@ export default function App() {
         );
         result = null;
       }
-    } while (
+    } while ( 
+      // target value conditions
       result === null ||
       result < 1 ||
       result > 999 ||
